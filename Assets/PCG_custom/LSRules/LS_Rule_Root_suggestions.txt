@@ -1,0 +1,12 @@
+# Default Rule and Root sequence suggestions for LS based map
+
+Rule:
+F[+F][-F]
+For alternatives to add in case of stochastic LS (Random Result check):
+[+F]F[-F]
+[-F]F[+F]
+but try to experiment other solutions
+
+
+Root Sequence:
+[F]--F
