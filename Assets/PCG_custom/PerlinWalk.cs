@@ -2,10 +2,12 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.AI.Navigation;
 
 [RequireComponent (typeof (Terrain))]
 
 public class PerlinWalk : MonoBehaviour {
+	public GameObject targetMarkerPrefab;
 	public static event Action<float[,]> OnTerrainGenerated;
 
 	public Texture2D baseHeightMap = null;
@@ -80,11 +82,17 @@ public class PerlinWalk : MonoBehaviour {
 			}
 			height = ToGround(height, lx, ly);
 		}
-
  		t.terrainData.SetHeights (0, 0, height);
 		yield return new WaitForEndOfFrame();
+
+		// ASPETTA due frame perché terrain/collider siano aggiornati
+		t.terrainData.SyncHeightmap();
+		yield return new WaitForFixedUpdate();
+
+		
 		AdjustAgent(agentToAdjust, t);
-		OnTerrainGenerated?.Invoke(height);
+		
+		
 		yield break;
 	}
 
@@ -179,16 +187,14 @@ public class PerlinWalk : MonoBehaviour {
 		return m;
 	}
 
-	// Prevents leaving the agent below ground
 	private void AdjustAgent(Transform a, Terrain t) {
-		RaycastHit hit;
-		// We have to do this crap because Raycasting up will not work.
-		// I discovered the hard way, backface culling is preventing Physics from registering the hit 
-		if (Physics.Raycast (a.position + Vector3.up * 1000 , -Vector3.up * 1000, out hit)) {
-			if (hit.transform == transform) {
-				a.position = new Vector3(a.position.x, hit.point.y + 1f, a.position.z);
-			}
-		}
-	}
-
+        RaycastHit hit;
+        // We have to do this crap because Raycasting up will not work.
+        // I discovered the hard way, backface culling is preventing Physics from registering the hit 
+        if (Physics.Raycast (a.position + Vector3.up * 1000 , -Vector3.up * 1000, out hit)) {
+            if (hit.transform == transform) {
+                a.position = new Vector3(a.position.x, hit.point.y + 1f, a.position.z);
+            }
+        }
+    }
 }
