@@ -93,6 +93,47 @@ public class AgentMovement : MonoBehaviour
 
         float y = terrain.SampleHeight(newPos) + 0.1f;
         transform.position = new Vector3(newPos.x, y, newPos.z);
+
+        Vector3 goalWorld = controller.GetGoal();
+        Vector3 flatGoal = new Vector3(goalWorld.x, 0, goalWorld.z);
+        flatPos  = new Vector3(transform.position.x, 0, transform.position.z);
+
+        if (Vector3.Distance(flatPos, flatGoal) < 0.8f)
+        {
+            OnReachedGoal();
+            return;
+        }
+    }
+    private void OnReachedGoal()
+    {
+        Debug.Log("Goal raggiunto! Ricalcolo nuovo goal...");
+
+        int res = terrain.terrainData.heightmapResolution - 1;
+
+        // posizione agente → coordinate heightmap
+        int agentX = Mathf.RoundToInt((transform.position.x / terrain.terrainData.size.x) * res);
+        int agentZ = Mathf.RoundToInt((transform.position.z / terrain.terrainData.size.z) * res);
+
+        agentX = Mathf.Clamp(agentX, 0, res);
+        agentZ = Mathf.Clamp(agentZ, 0, res);
+
+        // goal opposto
+        int goalX = res - agentX;
+        int goalZ = res - agentZ;
+
+        goalX = Mathf.Clamp(goalX, 0, res);
+        goalZ = Mathf.Clamp(goalZ, 0, res);
+
+        GraphNode opposite = graph.nodes[goalZ, goalX];
+        GraphNode newGoal  = SpawnerAStar.FindSpawnPoint(graph, opposite, 7.5f);
+
+        controller.SetGoal(newGoal, terrain);
+
+        // Ricrea il path
+        StartPathfinding();
+
+        // Riparti dal nodo 0
+        currentIndex = 0;
     }
 
     float GetSpeedBetween(GraphNode curr, GraphNode next)

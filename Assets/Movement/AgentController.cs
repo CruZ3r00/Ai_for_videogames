@@ -29,16 +29,25 @@ public class AgentController : MonoBehaviour
 
     private void CreateGoalBeam(Vector3 pos)
     {
+        // 1) Rimuovi eventuale fascio esistente
+        GameObject oldBeam = GameObject.Find("GoalBeam");
+        if (oldBeam != null)
+            Destroy(oldBeam);
+
+        // 2) Crea il nuovo fascio
         GameObject beam = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
         beam.name = "GoalBeam";
 
         float beamHeight = 30f;
         beam.transform.localScale = new Vector3(0.6f, beamHeight / 2f, 0.6f);
+
         beam.transform.position = pos + Vector3.up * (beamHeight / 2f);
 
+        // materiale
         var renderer = beam.GetComponent<MeshRenderer>();
         renderer.material = Resources.Load<Material>("GoalBeamMat");
 
+        // togli il collider
         Destroy(beam.GetComponent<Collider>());
     }
 
