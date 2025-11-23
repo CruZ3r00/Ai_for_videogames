@@ -1,56 +1,79 @@
-public List<GridNode> FindPathToHighPoint(GridNode[,] graph, GridNode start, float minHeight)
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
+
+public class SpawnerAStar
 {
-    int w = graph.GetLength(1);
-    int h = graph.GetLength(0);
+    private static readonly int[,] dirs = {
+        { 1, 0 }, { -1, 0 },
+        { 0, 1 }, { 0, -1 },
+        { 1, 1 }, { -1, 1 },
+        { 1,-1 }, { -1,-1 }
+    };
 
-    List<GridNode> open = new List<GridNode>();
-    HashSet<GridNode> closed = new HashSet<GridNode>();
-
-    open.Add(start);
-
-    while (open.Count > 0)
+    public static GraphNode FindSpawnPoint(Graph graph, GraphNode start, float minHeight)
     {
-        // Nodo con costo più basso
-        GridNode current = open[0];
-        for (int i = 1; i < open.Count; i++)
+        
+        List<GraphNode> open = new List<GraphNode>();
+        HashSet<GraphNode> closed = new HashSet<GraphNode>();
+
+        start.gCost = 0;
+        open.Add(start);
+
+        while (open.Count > 0)
         {
-            if (open[i].fCost < current.fCost)
-                current = open[i];
-        }
-
-        open.Remove(current);
-        closed.Add(current);
-
-        // TARGET: qualsiasi nodo sufficientemente alto
-        if (current.height >= minHeight)
-        {
-            return RetracePath(start, current);
-        }
-
-        // Esplora vicini
-        foreach (GridNode neighbour in GetNeighbours(graph, current))
-        {
-            if (!neighbour.walkable || closed.Contains(neighbour))
-                continue;
-
-            float tentativeG = current.gCost + 1f;
-
-            if (tentativeG < neighbour.gCost || !open.Contains(neighbour))
+            // trova nodo con fCost minore
+            GraphNode current = open[0];
+            for (int i = 1; i < open.Count; i++)
             {
-                neighbour.gCost = tentativeG;
-                neighbour.hCost = heuristic(neighbour, start); // non importa troppo qui
-                neighbour.parent = current;
-
-                if (!open.Contains(neighbour))
-                    open.Add(neighbour);
+                if (open[i].fCost < current.fCost)
+                    current = open[i];
             }
+
+            open.Remove(current);
+            closed.Add(current);
+
+            // obiettivo: altezza
+            if (current.height >= minHeight)
+                return current;
+
+            // esplora vicini
+            foreach (GraphNode n in GetNeighbours(graph, current))
+            {
+                if (!n.walkable || closed.Contains(n))
+                    continue;
+
+                float tentativeG = current.gCost + 1f;
+
+                if (tentativeG < n.gCost)
+                {
+                    n.gCost = tentativeG;
+                    n.hCost = Heuristic(start, n);
+                    n.parent = current;
+
+                    if (!open.Contains(n))
+                        open.Add(n);
+                }
+            }
+        }
+
+        return null; // nessun punto alto trovato
+    }
+
+    private static IEnumerable<GraphNode> GetNeighbours(Graph graph, GraphNode node)
+    {
+        for (int i = 0; i < dirs.GetLength(0); i++)
+        {
+            int nx = node.x + dirs[i, 0];
+            int nz = node.z + dirs[i, 1];
+
+            if (nx >= 0 && nx < graph.width && nz >= 0 && nz < graph.height)
+                yield return graph.nodes[nz, nx];
         }
     }
 
-    return null; // nessun punto trovato
-}
-
-private float heuristic(GridNode a, GridNode b)
-{
-    return Mathf.Abs(a.x - b.x) + Mathf.Abs(a.z - b.z);
+    private static float Heuristic(GraphNode a, GraphNode b)
+    {
+        return Mathf.Abs(a.x - b.x) + Mathf.Abs(a.z - b.z);
+    }
 }

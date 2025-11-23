@@ -1,10 +1,12 @@
+using System;
+using UnityEngine;
 public class GraphNode
 {
     public int x, z;
     public float height;
     public bool walkable;
 
-    public float gCost;
+    public float gCost = Mathf.Infinity;
     public float hCost;
     public float fCost => gCost + hCost;
 
@@ -16,5 +18,8 @@ public class GraphNode
         this.z = z;
         this.height = height;
         this.walkable = walkable;
+
+        gCost = Mathf.Infinity;  
+        hCost = 0f;
     }
 }

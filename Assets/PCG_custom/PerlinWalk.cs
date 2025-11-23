@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.AI.Navigation;
+using Unity.VisualScripting;
 
 [RequireComponent (typeof (Terrain))]
 
@@ -12,7 +13,6 @@ public class PerlinWalk : MonoBehaviour {
 
 	public Texture2D baseHeightMap = null;
 	public int resolution = 50;
-	public bool makeItFlat = false;
 	public float amplitude = 0f;
 	public bool addHarmonics = false;
 	public int RandomSeed = 0;
@@ -39,12 +39,6 @@ public class PerlinWalk : MonoBehaviour {
 
 		int lx = t.terrainData.heightmapResolution;
 		int ly = t.terrainData.heightmapResolution;
-
-		if (makeItFlat) {
-			t.terrainData.SetHeights (0, 0, new float [ly, lx]);
-			AdjustAgent(agentToAdjust, t);
-			yield break;
-		}
 
 		UnityEngine.Random.InitState (RandomSeed);
 
@@ -87,11 +81,30 @@ public class PerlinWalk : MonoBehaviour {
 
 		// ASPETTA due frame perché terrain/collider siano aggiornati
 		t.terrainData.SyncHeightmap();
+		yield return null;
 		yield return new WaitForFixedUpdate();
+		yield return null;
 
-		
-		AdjustAgent(agentToAdjust, t);
-		
+		Graph graph = new Graph(height, t);
+		GraphNode start = graph.nodes[0,0];
+		float minHeight = 7.5f;
+
+		GraphNode spawnNode = SpawnerAStar.FindSpawnPoint(graph, start, minHeight);
+		if(spawnNode == null) Debug.LogWarning("EDDIOCANE");
+		AdjustAgent(agentToAdjust, t, spawnNode);
+		Rigidbody rb = agentToAdjust.GetComponent<Rigidbody>();
+		if (rb != null)
+		{
+			rb.linearVelocity = Vector3.zero;
+			rb.angularVelocity = Vector3.zero;
+			rb.useGravity = true;
+			rb.freezeRotation = true;
+		}
+		AgentController ac = agentToAdjust.GetComponent<AgentController>();
+		if (ac != null)
+		{
+			ac.SetGoalFromSpawn(spawnNode, t);
+		}
 		
 		yield break;
 	}
@@ -187,14 +200,20 @@ public class PerlinWalk : MonoBehaviour {
 		return m;
 	}
 
-	private void AdjustAgent(Transform a, Terrain t) {
-        RaycastHit hit;
-        // We have to do this crap because Raycasting up will not work.
-        // I discovered the hard way, backface culling is preventing Physics from registering the hit 
-        if (Physics.Raycast (a.position + Vector3.up * 1000 , -Vector3.up * 1000, out hit)) {
-            if (hit.transform == transform) {
-                a.position = new Vector3(a.position.x, hit.point.y + 1f, a.position.z);
-            }
-        }
-    }
+	private void AdjustAgent(Transform a, Terrain t, GraphNode n) 
+	{
+		// Terrain size in world units
+		float terrainWidth  = t.terrainData.size.x;
+		float terrainLength = t.terrainData.size.z;
+		float terrainHeight = t.terrainData.size.y;
+
+		// Convert node.x, node.z from grid coords → world coords
+		float worldX = ((n.x ) / (float)(t.terrainData.heightmapResolution - 1)) * terrainWidth;
+		float worldZ = ((n.z )/ (float)(t.terrainData.heightmapResolution - 1)) * terrainLength;
+
+		// Altezza reale del nodo
+		float worldY = n.height;
+		// Sposta l'agente
+		a.position = new Vector3(worldX, worldY + 0.1f, worldZ);
+	}
 }
