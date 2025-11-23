@@ -1,8 +1,8 @@
+using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
 
-public class SpawnerAStar
+public class PathfinderAStar 
 {
     private static readonly int[,] dirs = {
         { 1, 0 }, { -1, 0 },
@@ -11,18 +11,25 @@ public class SpawnerAStar
         { 1,-1 }, { -1,-1 }
     };
 
-    public static GraphNode FindSpawnPoint(Graph graph, GraphNode start, float minHeight)
+    public static List<GraphNode> FindFullPath(Graph graph, GraphNode start, GraphNode goal)
     {
-        
         List<GraphNode> open = new List<GraphNode>();
         HashSet<GraphNode> closed = new HashSet<GraphNode>();
 
+        foreach (var node in graph.nodes)
+        {
+            node.gCost = Mathf.Infinity;
+            node.hCost = 0;
+            node.parent = null;
+        }
+
         start.gCost = 0;
+        start.hCost = Heuristic(start, goal);
+
         open.Add(start);
 
         while (open.Count > 0)
         {
-            // trova nodo con fCost minore
             GraphNode current = open[0];
             for (int i = 1; i < open.Count; i++)
             {
@@ -33,11 +40,9 @@ public class SpawnerAStar
             open.Remove(current);
             closed.Add(current);
 
-            // obiettivo: altezza
-            if (current.height >= minHeight)
-                return current;
+            if (current == goal)
+                return RetracePath(start, goal);
 
-            // esplora vicini
             foreach (GraphNode n in GetNeighbours(graph, current))
             {
                 if (!n.walkable || closed.Contains(n))
@@ -48,7 +53,7 @@ public class SpawnerAStar
                 if (tentativeG < n.gCost)
                 {
                     n.gCost = tentativeG;
-                    n.hCost = Heuristic(start, n);
+                    n.hCost = Heuristic(n, goal);
                     n.parent = current;
 
                     if (!open.Contains(n))
@@ -57,9 +62,29 @@ public class SpawnerAStar
             }
         }
 
-        return null; // nessun punto alto trovato
+        return null;
     }
-    
+    private static List<GraphNode> RetracePath(GraphNode start, GraphNode end)
+    {
+        List<GraphNode> path = new List<GraphNode>();
+        GraphNode current = end;
+
+        // Risale i parent dal goal fino allo start
+        while (current != start)
+        {
+            path.Add(current);
+            current = current.parent;
+        }
+
+        // Aggiungi lo start (opzionale: dipende se vuoi includere il nodo di origine)
+        path.Add(start);
+
+        // Inverti la lista per ottenere start → ... → goal
+        path.Reverse();
+
+        return path;
+    }
+
     private static IEnumerable<GraphNode> GetNeighbours(Graph graph, GraphNode node)
     {
         for (int i = 0; i < dirs.GetLength(0); i++)

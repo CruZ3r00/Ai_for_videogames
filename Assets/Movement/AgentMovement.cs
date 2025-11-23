@@ -1,35 +1,42 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(CharacterController))]
 public class AgentMovement : MonoBehaviour
 {
-    /*
     public Terrain terrain;
-    public Graph graph;   
-    public float baseSpeed = 1f;
+    public Graph graph;
 
-    private AgentController agentController;
+    private AgentController controller;
+    private CharacterController cc;
+
     private List<GraphNode> path;
     private int currentIndex = 0;
 
-    void Start()
+    public float gravity = 10f;
+
+    public void Initialize(Graph g, Terrain t, Vector3 startPos)
     {
-        agentController = GetComponent<AgentController>();
+        graph = g;
+        terrain = t;
 
-        if (terrain == null)
-        {
-            terrain = FindAnyObjectByType<Terrain>();
-        }
+        cc = GetComponent<CharacterController>();
 
-        // recupera goal da AgentController
-        Vector3 goalWorld = agentController.GetGoal();
+        transform.position = startPos;
 
-        // converte goal world → goal grid
+        StartPathfinding();
+    }
+
+    void StartPathfinding()
+    {
+        controller = GetComponent<AgentController>();
+
+        Vector3 goalWorld = controller.GetGoal();
+
         GraphNode startNode = WorldToNode(transform.position);
-        GraphNode goalNode = WorldToNode(goalWorld);
+        GraphNode goalNode  = WorldToNode(goalWorld);
 
-        // pathfinding
-        path = HeightmapPathfinder.FindFullPath(graph, startNode, goalNode);
+        path = PathfinderAStar.FindFullPath(graph, startNode, goalNode);
 
         if (path == null)
         {
@@ -38,35 +45,67 @@ public class AgentMovement : MonoBehaviour
         }
 
         Debug.Log("Path trovato. Lunghezza: " + path.Count);
+        var debug = GetComponent<PathDebugger>();
+        if (debug != null)
+        {
+            List<Vector3> wp = new List<Vector3>();
+            foreach (GraphNode n in path)
+                wp.Add(NodeToWorld(n));
+
+            debug.ShowPath(wp);
+        }
     }
 
     void Update()
     {
-        if (path == null || currentIndex >= path.Count) return;
+        if (path == null || currentIndex >= path.Count)
+            return;
 
-        // converti il nodo corrente in posizione world
-        Vector3 nextPos = NodeToWorld(path[currentIndex]);
+        // prossimo nodo reale
+        GraphNode nextNode = currentIndex < path.Count - 1
+                            ? path[currentIndex + 1]
+                            : path[currentIndex];
 
-        // calcola direzione
-        Vector3 dir = (nextPos - transform.position).normalized;
+        Vector3 targetPos = NodeToWorld(nextNode);
 
-        // movimento
-        transform.position += dir * baseSpeed * Time.deltaTime;
+        Vector3 curr = transform.position;
 
-        // mantieni l'agente attaccato al terreno
-        float y = terrain.SampleHeight(transform.position);
-        transform.position = new Vector3(transform.position.x, y + 0.05f, transform.position.z);
+        Vector3 flatCurr   = new Vector3(curr.x, 0, curr.z);
+        Vector3 flatTarget = new Vector3(targetPos.x, 0, targetPos.z);
 
-        // controllo arrivo al nodo
-        if (Vector3.Distance(transform.position, nextPos) < 0.5f)
-        {
+        Vector3 dirXZ = (flatTarget - flatCurr).normalized;
+
+        // se la direzione è zero... NON muove. Risolvi così:
+        if (dirXZ == Vector3.zero)
+            return;
+
+        // velocità
+        float speed = GetSpeedBetween(
+            currentIndex > 0 ? path[currentIndex - 1] : nextNode,
+            nextNode
+        );
+
+        Vector3 move = dirXZ * speed;
+
+        // forza verticale controllata
+        float terrainY = terrain.SampleHeight(curr);
+        float desiredY = terrainY + 0.1f;
+
+        float deltaY = desiredY - curr.y;
+
+        move.y = deltaY * 5f - 1.5f;
+
+        cc.Move(move * Time.deltaTime);
+
+        // passo nodo?
+        if (Vector3.Distance(flatCurr, flatTarget) < 0.5f)
             currentIndex++;
-        }
     }
 
-    // ------------------------------------------------------------
-    // CONVERSIONI GRIGLIA <-> WORLD
-    // ------------------------------------------------------------
+    float GetSpeedBetween(GraphNode current, GraphNode next)
+    {
+        return next.height > current.height ? 0.5f : 1f;
+    }
 
     GraphNode WorldToNode(Vector3 pos)
     {
@@ -90,6 +129,6 @@ public class AgentMovement : MonoBehaviour
 
         float worldY = terrain.SampleHeight(new Vector3(worldX, 0, worldZ));
 
-        return new Vector3(worldX, worldY + 0.05f, worldZ);
-    }*/
+        return new Vector3(worldX, worldY, worldZ);
+    }
 }

@@ -86,6 +86,8 @@ public class PerlinWalk : MonoBehaviour {
 		yield return null;
 
 		Graph graph = new Graph(height, t);
+		AgentMovement movement = agentToAdjust.GetComponent<AgentMovement>();
+		
 		GraphNode start = graph.nodes[0,0];
 		float minHeight = 7.5f;
 
@@ -109,6 +111,7 @@ public class PerlinWalk : MonoBehaviour {
 			GraphNode goalNode = graph.nodes[goalZ, goalX];
 			GraphNode goal = SpawnerAStar.FindSpawnPoint(graph, goalNode, minHeight);
 			ac.SetGoal(goal, t);
+			movement.Initialize(graph, t, agentToAdjust.position);
 		}
 		
 		yield break;
