@@ -1,5 +1,8 @@
 using UnityEngine;
-
+/*
+    memorizzazione del goal corrente sia come nodo che come posizione nel mondo, 
+    creazione del fascio di luce del target, get del goal per gli altri componenti
+*/
 public class AgentController : MonoBehaviour
 {
     public static Vector3 GoalPosition;
@@ -10,6 +13,7 @@ public class AgentController : MonoBehaviour
         Debug.Log("[AgentController] Agent initial position = " + transform.position);
     }
 
+    //funzione che setta il goal sia come nodo che come posizione
     public void SetGoal(GraphNode goalNode, Terrain t)
     {
         GoalNode = goalNode;  // <-- salviamo anche il nodo di goal
@@ -27,6 +31,7 @@ public class AgentController : MonoBehaviour
         Debug.Log($"[AgentController] Goal automatico impostato in {GoalPosition}");
     }
 
+    //creazuibe del fascio di luce ed eliminazione del precedente se dovesse essercene gia uno
     private void CreateGoalBeam(Vector3 pos)
     {
         // 1) Rimuovi eventuale fascio esistente

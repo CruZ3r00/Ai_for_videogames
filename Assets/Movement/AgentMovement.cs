@@ -1,6 +1,12 @@
 using System.Collections.Generic;
 using UnityEngine;
-
+/*
+    Gestisce il movimento fisico dell’agente:
+    riceve dal Graph la griglia e dal AgentController il goal logico
+    usa PathfinderAStar per calcolare il percorso
+    ogni frame si sposta lungo il path, adattandosi all’altezza del terreno
+    quando raggiunge il goal, calcola un nuovo goal “opposto” e ricomincia
+*/
 public class AgentMovement : MonoBehaviour
 {
     public Terrain terrain;

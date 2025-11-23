@@ -1,25 +1,36 @@
 ﻿using System.Collections;
 using System;
-using System.Collections.Generic;
 using UnityEngine;
-using Unity.AI.Navigation;
-using Unity.VisualScripting;
+
+/*
+	generatore del mondo tramite l'algoritmo Perlin Noise, inoltre crea il graph per il path finding
+	trova il punto di spawn dell'agent e imposta il primo punto goal per l'agent,
+	posiziona l'agent, inizializza agentMOvement, agentController e far partire il pathfinding
+*/
 
 [RequireComponent (typeof (Terrain))]
 
 public class PerlinWalk : MonoBehaviour {
-	public GameObject targetMarkerPrefab;
+	//per notificare quando il terreno è pronto
 	public static event Action<float[,]> OnTerrainGenerated;
 
+	//heightmap iniziale
 	public Texture2D baseHeightMap = null;
+	//“size” del noise
 	public int resolution = 50;
+	//quanto forte è il noise
 	public float amplitude = 0f;
+	//se aggiungere rumore extra a diverse scale
 	public bool addHarmonics = false;
+	//seme casua­le se non impostato
 	public int RandomSeed = 0;
+	//riferimento all'agente da posizionare
 	public Transform agentToAdjust = null;
 
+	//componente terrain nella scena
 	private Terrain t;
 
+	//set del random con il time corrente, start della coroutine per generare la landscape
 	void Start () {
 		if (RandomSeed == 0) RandomSeed = (int) System.DateTime.Now.Ticks;
 
@@ -33,17 +44,22 @@ public class PerlinWalk : MonoBehaviour {
 			StartCoroutine(GenerateLandscape());
 	}
 
+	//generazione del mondo
 	private IEnumerator GenerateLandscape() {
 
 		yield return new WaitForEndOfFrame();
 
+		//dimensioni heightmap del terrain
 		int lx = t.terrainData.heightmapResolution;
 		int ly = t.terrainData.heightmapResolution;
 
+		//set del seed goblale di unity
 		UnityEngine.Random.InitState (RandomSeed);
 
+		//array per la mappa finale
 		float [,] height = new float [ly, lx];
 		
+		//se hai una mappa di base la imposti
 		if (baseHeightMap) {
 			int tx = baseHeightMap.width;
 			int ty = baseHeightMap.height;
@@ -55,8 +71,11 @@ public class PerlinWalk : MonoBehaviour {
 				}
 			}
 		}
+
+		//abbasso un po l'altezza
 		height = Amplify(height, lx, ly, 0.75f);
 		
+		//generazione del noise 
 		float [,] noise = CreateNoise(lx, ly, resolution);
 		noise = Amplify(noise, lx, ly, amplitude);
 		for (int i = 0 ; i < lx ; i += 1) {
@@ -85,23 +104,24 @@ public class PerlinWalk : MonoBehaviour {
 		yield return new WaitForFixedUpdate();
 		yield return null;
 
-		// --- GRAFO ---
+		// creazione del grafo
 		Graph graph = new Graph(height, t);
 
-		// --- MOVEMENT ---
+		// inizializzazione di agentmovement
 		AgentMovement movement = agentToAdjust.GetComponent<AgentMovement>();
 		movement.Initialize(graph, t);   // solo set dei riferimenti
 
-		// --- SPAWN ---
+		// selezione del nodo su cui posizionare l'agente
 		GraphNode start = graph.nodes[0, 0];
 		float minHeight = 7.5f;
 
 		GraphNode spawnNode = SpawnerAStar.FindSpawnPoint(graph, start, minHeight);
 		if (spawnNode == null) Debug.LogWarning("SpawnNode NULL");
 
+		//posizionamento dell'agente
 		AdjustAgent(agentToAdjust, t, spawnNode);
 
-		// --- GOAL ---
+		// settaggio del goal
 		AgentController ac = agentToAdjust.GetComponent<AgentController>();
 		if (ac != null)
 		{

@@ -1,7 +1,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-
+/*
+    simile a PathfinderAStar, ma trova solo il punto piu vicino che rispetti un'altezza minima
+    dal punto di partenza "Node"
+    il punto di partenza al primo avvio è 0,0,0. poi è calcolato in base a dove si trova l'agente
+    Usato in PerlinWalk per lo spawn iniziale dell'agente e per il goal nell'angolo opposto
+*/
 public class SpawnerAStar
 {
     private static readonly int[,] dirs = {

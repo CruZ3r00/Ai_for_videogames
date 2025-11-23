@@ -133,11 +133,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: d6d9528366241804a8ff982d3cfffa3a, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.58703536
+      value: 0.55
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: d6d9528366241804a8ff982d3cfffa3a, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.018079422
+      value: 0.6
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: d6d9528366241804a8ff982d3cfffa3a, type: 3}
       propertyPath: m_LocalRotation.w
@@ -376,8 +376,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   terrain: {fileID: 1780936233}
-  flatSpeed: 1
-  uphillSpeed: 0.5
+  flatSpeed: 5
+  uphillSpeed: 5
 --- !u!114 &580450335
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -629,13 +629,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1783173808}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.08715578, y: 0, z: 0, w: 0.9961947}
-  m_LocalPosition: {x: -4.67, y: 9.16, z: 1.08}
+  m_LocalRotation: {x: 0.10452846, y: 0, z: 0, w: 0.9945219}
+  m_LocalPosition: {x: -5.87, y: 4.29, z: 0.06}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 580450337}
-  m_LocalEulerAnglesHint: {x: 10, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 12, y: 0, z: 0}
 --- !u!114 &1783173812
 MonoBehaviour:
   m_ObjectHideFlags: 0
