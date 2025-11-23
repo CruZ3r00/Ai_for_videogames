@@ -85,36 +85,41 @@ public class PerlinWalk : MonoBehaviour {
 		yield return new WaitForFixedUpdate();
 		yield return null;
 
+		// --- GRAFO ---
 		Graph graph = new Graph(height, t);
+
+		// --- MOVEMENT ---
 		AgentMovement movement = agentToAdjust.GetComponent<AgentMovement>();
-		
-		GraphNode start = graph.nodes[0,0];
+		movement.Initialize(graph, t);   // solo set dei riferimenti
+
+		// --- SPAWN ---
+		GraphNode start = graph.nodes[0, 0];
 		float minHeight = 7.5f;
 
 		GraphNode spawnNode = SpawnerAStar.FindSpawnPoint(graph, start, minHeight);
-		if(spawnNode == null) Debug.LogWarning("EDDIOCANE");
+		if (spawnNode == null) Debug.LogWarning("SpawnNode NULL");
+
 		AdjustAgent(agentToAdjust, t, spawnNode);
-		Rigidbody rb = agentToAdjust.GetComponent<Rigidbody>();
-		if (rb != null)
-		{
-			rb.linearVelocity = Vector3.zero;
-			rb.angularVelocity = Vector3.zero;
-			rb.useGravity = true;
-			rb.freezeRotation = true;
-		}
+
+		// --- GOAL ---
 		AgentController ac = agentToAdjust.GetComponent<AgentController>();
 		if (ac != null)
 		{
-			// coordinate grid del goal
-			int goalX = (t.terrainData.heightmapResolution-1) - spawnNode.x;
-			int goalZ =( t.terrainData.heightmapResolution - 1) - spawnNode.z;
-			GraphNode goalNode = graph.nodes[goalZ, goalX];
-			GraphNode goal = SpawnerAStar.FindSpawnPoint(graph, goalNode, minHeight);
+			int res = t.terrainData.heightmapResolution - 1;
+			int goalX = res - spawnNode.x;
+			int goalZ = res - spawnNode.z;
+
+			GraphNode opposite = graph.nodes[goalZ, goalX];
+			GraphNode goal = SpawnerAStar.FindSpawnPoint(graph, opposite, minHeight);
+
 			ac.SetGoal(goal, t);
-			movement.Initialize(graph, t, agentToAdjust.position);
 		}
-		
+
+		// ora che GoalNode è impostato, possiamo calcolare il path
+		movement.StartPathfinding();
+
 		yield break;
+
 	}
 
 	private float[,] CreateNoise(int x, int y, int resolution) {
@@ -213,15 +218,14 @@ public class PerlinWalk : MonoBehaviour {
 		// Terrain size in world units
 		float terrainWidth  = t.terrainData.size.x;
 		float terrainLength = t.terrainData.size.z;
-		float terrainHeight = t.terrainData.size.y;
 
 		// Convert node.x, node.z from grid coords → world coords
-		float worldX = ((n.x ) / (float)(t.terrainData.heightmapResolution - 1)) * terrainWidth;
-		float worldZ = ((n.z )/ (float)(t.terrainData.heightmapResolution - 1)) * terrainLength;
+		float worldX = ((n.x +0.5f ) / (float)(t.terrainData.heightmapResolution - 1)) * terrainWidth;
+		float worldZ = ((n.z  +0.5f )/ (float)(t.terrainData.heightmapResolution - 1)) * terrainLength;
 
 		// Altezza reale del nodo
-		float worldY = n.height;
+		float worldY = n.height + 01f;
 		// Sposta l'agente
-		a.position = new Vector3(worldX, worldY + 0.1f, worldZ);
+		a.position = new Vector3(worldX, worldY, worldZ);
 	}
 }

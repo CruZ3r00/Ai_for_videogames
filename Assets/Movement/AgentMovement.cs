@@ -1,58 +1,55 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(CharacterController))]
 public class AgentMovement : MonoBehaviour
 {
     public Terrain terrain;
     public Graph graph;
 
     private AgentController controller;
-    private CharacterController cc;
-
     private List<GraphNode> path;
     private int currentIndex = 0;
 
-    public float gravity = 10f;
+    public float flatSpeed = 1f;
+    public float uphillSpeed = 0.5f;
 
-    public void Initialize(Graph g, Terrain t, Vector3 startPos)
+    public void Initialize(Graph g, Terrain t)
     {
         graph = g;
         terrain = t;
-
-        cc = GetComponent<CharacterController>();
-
-        transform.position = startPos;
-
-        StartPathfinding();
+        controller = GetComponent<AgentController>();
     }
 
-    void StartPathfinding()
+    public void StartPathfinding()
     {
-        controller = GetComponent<AgentController>();
-
-        Vector3 goalWorld = controller.GetGoal();
-
-        GraphNode startNode = WorldToNode(transform.position);
-        GraphNode goalNode  = WorldToNode(goalWorld);
-
-        path = PathfinderAStar.FindFullPath(graph, startNode, goalNode);
-
-        if (path == null)
+        if (graph == null || terrain == null || controller == null)
         {
-            Debug.LogError("PATH NON TROVATO!");
+            Debug.LogError("[AgentMovement] Missing references.");
             return;
         }
 
-        Debug.Log("Path trovato. Lunghezza: " + path.Count);
-        var debug = GetComponent<PathDebugger>();
-        if (debug != null)
-        {
-            List<Vector3> wp = new List<Vector3>();
-            foreach (GraphNode n in path)
-                wp.Add(NodeToWorld(n));
+        GraphNode startNode = WorldToNode(transform.position);
+        GraphNode goalNode  = controller.GoalNode;
 
-            debug.ShowPath(wp);
+        path = PathfinderAStar.FindFullPath(graph, startNode, goalNode);
+
+        if (path == null || path.Count == 0)
+        {
+            Debug.LogError("[AgentMovement] PATH NON TROVATO!");
+            return;
+        }
+
+        currentIndex = 0;
+        Debug.Log("[AgentMovement] Path trovato. Lunghezza: " + path.Count);
+
+        // debug visuale
+        var dbg = GetComponent<PathDebugger>();
+        if (dbg != null)
+        {
+            List<Vector3> worldPath = new List<Vector3>();
+            foreach (var n in path)
+                worldPath.Add(NodeToWorld(n));
+            dbg.ShowPath(worldPath);
         }
     }
 
@@ -61,74 +58,73 @@ public class AgentMovement : MonoBehaviour
         if (path == null || currentIndex >= path.Count)
             return;
 
-        // prossimo nodo reale
-        GraphNode nextNode = currentIndex < path.Count - 1
-                            ? path[currentIndex + 1]
-                            : path[currentIndex];
-
+        GraphNode nextNode = path[currentIndex];
         Vector3 targetPos = NodeToWorld(nextNode);
 
-        Vector3 curr = transform.position;
+        Vector3 pos = transform.position;
 
-        Vector3 flatCurr   = new Vector3(curr.x, 0, curr.z);
+        // movimento solo in XZ
+        Vector3 flatPos    = new Vector3(pos.x, 0, pos.z);
         Vector3 flatTarget = new Vector3(targetPos.x, 0, targetPos.z);
 
-        Vector3 dirXZ = (flatTarget - flatCurr).normalized;
+        Vector3 toTarget = flatTarget - flatPos;
+        float dist = toTarget.magnitude;
 
-        // se la direzione è zero... NON muove. Risolvi così:
-        if (dirXZ == Vector3.zero)
+        if (dist < 0.1f)
+        {
+            currentIndex++;
             return;
+        }
 
-        // velocità
+        Vector3 dir = toTarget / dist;
+
         float speed = GetSpeedBetween(
             currentIndex > 0 ? path[currentIndex - 1] : nextNode,
             nextNode
         );
 
-        Vector3 move = dirXZ * speed;
+        Vector3 step = dir * speed * Time.deltaTime;
 
-        // forza verticale controllata
-        float terrainY = terrain.SampleHeight(curr);
-        float desiredY = terrainY + 0.1f;
+        Vector3 newPos = new Vector3(
+            pos.x + step.x,
+            pos.y,
+            pos.z + step.z
+        );
 
-        float deltaY = desiredY - curr.y;
-
-        move.y = deltaY * 5f - 1.5f;
-
-        cc.Move(move * Time.deltaTime);
-
-        // passo nodo?
-        if (Vector3.Distance(flatCurr, flatTarget) < 0.5f)
-            currentIndex++;
+        float y = terrain.SampleHeight(newPos) + 0.1f;
+        transform.position = new Vector3(newPos.x, y, newPos.z);
     }
 
-    float GetSpeedBetween(GraphNode current, GraphNode next)
+    float GetSpeedBetween(GraphNode curr, GraphNode next)
     {
-        return next.height > current.height ? 0.5f : 1f;
+        return next.height > curr.height ? uphillSpeed : flatSpeed;
     }
 
+    // ---- Conversioni ----
     GraphNode WorldToNode(Vector3 pos)
     {
         int res = terrain.terrainData.heightmapResolution;
-
         float tx = pos.x / terrain.terrainData.size.x;
         float tz = pos.z / terrain.terrainData.size.z;
 
-        int x = Mathf.Clamp(Mathf.RoundToInt(tx * (res - 1)), 0, res - 1);
-        int z = Mathf.Clamp(Mathf.RoundToInt(tz * (res - 1)), 0, res - 1);
+        int x = Mathf.RoundToInt(tx * (res - 1));
+        int z = Mathf.RoundToInt(tz * (res - 1));
+
+        x = Mathf.Clamp(x, 0, res - 1);
+        z = Mathf.Clamp(z, 0, res - 1);
 
         return graph.nodes[z, x];
     }
 
     Vector3 NodeToWorld(GraphNode node)
     {
-        int res = terrain.terrainData.heightmapResolution;
+        int res = terrain.terrainData.heightmapResolution - 1;
 
-        float worldX = ((node.x + 0.5f) / (res - 1)) * terrain.terrainData.size.x;
-        float worldZ = ((node.z + 0.5f) / (res - 1)) * terrain.terrainData.size.z;
+        float worldX = ((node.x + 0.5f) / res) * terrain.terrainData.size.x;
+        float worldZ = ((node.z + 0.5f) / res) * terrain.terrainData.size.z;
 
         float worldY = terrain.SampleHeight(new Vector3(worldX, 0, worldZ));
 
-        return new Vector3(worldX, worldY, worldZ);
+        return new Vector3(worldX, worldY + 0.1f, worldZ);
     }
 }
