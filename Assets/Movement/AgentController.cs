@@ -16,29 +16,17 @@ public class AgentController : MonoBehaviour
         Debug.Log("[AgentController] Goal = " + GetGoal());
     }
 
-    public void SetGoalFromSpawn(GraphNode spawnNode, Terrain t)
+    public void SetGoal(GraphNode goalNode, Terrain t)
     {
-        int res = t.terrainData.heightmapResolution;
+        // 4) Conversione nodo -> world coordinates
+        float worldX = ((goalNode.x + 0.5f) / (float)(t.terrainData.heightmapResolution-1) ) * t.terrainData.size.x;
+        float worldZ = ((goalNode.z + 0.5f) / (float)(t.terrainData.heightmapResolution-1) ) * t.terrainData.size.z;
 
-        int maxX = res - 1;
-        int maxZ = res - 1;
-
-        // coordinate grid del goal
-        int goalX = maxX - spawnNode.x;
-        int goalZ = maxZ - spawnNode.z;
-
-        // conversione grid → world
-        float worldX = ((goalX + 0.5f) / (float)(res - 1)) * t.terrainData.size.x;
-        float worldZ = ((goalZ + 0.5f) / (float)(res - 1)) * t.terrainData.size.z;
-
-        // altezza del goal (non abbiamo graph qui → raycast)
-        float worldY = 0f;
-        if (Physics.Raycast(new Vector3(worldX, 200f, worldZ), Vector3.down, out RaycastHit hit, Mathf.Infinity))
-        {
-            worldY = hit.point.y;
-        }
+        float worldY = t.SampleHeight(new Vector3(worldX, 0, worldZ)) + 0.05f;
 
         GoalPosition = new Vector3(worldX, worldY, worldZ);
+
+        
         CreateGoalBeam(GoalPosition);
         Debug.Log($"[AgentController] Goal automatico impostato in {GoalPosition}");
     }

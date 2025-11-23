@@ -103,7 +103,12 @@ public class PerlinWalk : MonoBehaviour {
 		AgentController ac = agentToAdjust.GetComponent<AgentController>();
 		if (ac != null)
 		{
-			ac.SetGoalFromSpawn(spawnNode, t);
+			// coordinate grid del goal
+			int goalX = (t.terrainData.heightmapResolution-1) - spawnNode.x;
+			int goalZ =( t.terrainData.heightmapResolution - 1) - spawnNode.z;
+			GraphNode goalNode = graph.nodes[goalZ, goalX];
+			GraphNode goal = SpawnerAStar.FindSpawnPoint(graph, goalNode, minHeight);
+			ac.SetGoal(goal, t);
 		}
 		
 		yield break;
