@@ -25,12 +25,10 @@ public class MoveToPath
     public void Enter()
     {
         Debug.Log("sono in move to path");
-        movement.canMove = true;
     }
 
     public void Exit()
     {
-        movement.canMove = false;
     }
 
 }

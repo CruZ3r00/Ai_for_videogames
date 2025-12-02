@@ -62,9 +62,9 @@ public class TidalWalkerFSM : MonoBehaviour
     {
         while (true)
         {
-            lastWaterHeight = water.transform.position.y;
             //chiamo update della classe base FSM per gestire l'attivazione degli stati
             fsm.Update();
+            lastWaterHeight = water.transform.position.y;
             //attesa per rifare l'update
             yield return new WaitForSeconds(checkInterval);
         }
@@ -111,6 +111,7 @@ public class TidalWalkerFSM : MonoBehaviour
         checkSafe.AddTransition(new FSMTransition(PathSafe), moveToPath);
         checkSafe.AddTransition(new FSMTransition(PathUnSafe), avoidFlood);
         checkSafe.AddTransition(new FSMTransition(PathUnSafeWaterFalling),stranded);
+        checkSafe.AddTransition(new FSMTransition(PathNull),recalculatePath);
 
         //movetopath -> recalculatepath (se il path diventa invalido)
         //movetopath -> avoidflood
@@ -153,13 +154,17 @@ public class TidalWalkerFSM : MonoBehaviour
     }
     public bool PathUnSafe()
     {
-        return !checkSafeState.isSafe && WaterIsRising();
+        return !checkSafeState.isSafe && WaterIsRising() && !checkSafeState.recalc;
     }
 
     public bool PathUnSafeWaterFalling()
     {
-        return !checkSafeState.isSafe && !WaterIsRising();
-    }  
+        return !checkSafeState.isSafe && !WaterIsRising() && !checkSafeState.recalc;
+    } 
+
+    public bool PathNull(){
+        return checkSafeState.recalc;
+    }
     public bool ReachedGoal()
     {
         Vector3 goalWorld = controller.GetGoal();

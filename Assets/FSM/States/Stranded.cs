@@ -32,7 +32,6 @@ public class Stranded
     public void Enter()
     {
         Debug.Log("sono in stranded");
-        movement.canMove = false;
         currentNode = movement.WorldToNode(transform.position);
         safeHeight = fsm.WaterIsRising() ? currentNode.height : 7.1f;
     }
@@ -51,7 +50,6 @@ public class Stranded
         }
         if (safe.Count == 0)
         {
-            movement.canMove = false;
             return;
         }
 
@@ -65,12 +63,6 @@ public class Stranded
         {
             movement.path = path;
             movement.currentIndex = 0;
-            movement.canMove = true;
-        }
-        else
-        {
-            // Path impossibile → rimani fermo
-            movement.canMove = false;
         }
     }
 

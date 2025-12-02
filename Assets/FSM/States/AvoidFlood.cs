@@ -27,30 +27,37 @@ public class AvoidFlood
     public void Enter()
     {
         Debug.Log("sono in avoid flood");
-        movement.canMove = false;
         reached = false;
-        start = movement.WorldToNode(movement.transform.position);
 
+        start = movement.WorldToNode(transform.position);
         safeTarget = SpawnerAStar.FindSpawnPoint(graph, start, 7.5f);
+
         if (safeTarget == null)
         {
             Debug.LogWarning("[AvoidFlood] Nessun nodo sicuro trovabile!");
+            reached = true;
             return;
         }
-        
-        List<GraphNode> safePath = PathfinderAStar.FindFullPath(graph, start, safeTarget);
+
+        List<GraphNode> safePath = FloodAwareAStar.FindFullPath(graph, start, safeTarget, water, movement);
+
+        if (safePath == null)
+        {
+            Debug.LogWarning("[AvoidFlood] Nessun path sicuro verso l’altura!");
+            reached = true;
+            return;
+        }
+
         movement.path = safePath;
         movement.currentIndex = 0;
     }
     public void Stay()
     {
-        movement.canMove = true;
         if( transform.position.y >= 7.1f ) reached = true;
     }
 
     public void Exit()
     {
-        movement.canMove = false;
     }
  
 }

@@ -15,6 +15,7 @@ public class CheckSafe
 
     public bool isSafe = false;
     
+    public bool recalc = false;
     public CheckSafe(Transform tran,AgentMovement m,AgentController c,Graph g,Terrain ter, WaterSystem w)
     {
         transform = tran;
@@ -28,8 +29,16 @@ public class CheckSafe
     public void Enter()
     {
         Debug.Log("sono in check safe");
-        isSafe = false;
         int i = movement.currentIndex;
+        isSafe = false;
+        recalc = false;
+        if (movement.path == null || movement.path.Count == 0)
+        {
+            recalc = true;
+            // nessun path = non safe / forza ricalcolo
+            return;
+        }
+
         while (i < movement.path.Count && movement.EstimateTimeToReach(i) < 8f)
         {
             float arrivalTime = movement.EstimateTimeToReach(i);

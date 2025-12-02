@@ -25,7 +25,6 @@ public class RecalculatePath
     public void Enter()
     {
         Debug.Log("sono in recalculate path");
-        movement.canMove = false;
         movement.StartPathfinding();
     }
 }
