@@ -192,6 +192,9 @@ PrefabInstance:
       addedObject: {fileID: 580450332}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: d6d9528366241804a8ff982d3cfffa3a, type: 3}
       insertIndex: -1
+      addedObject: {fileID: 580450339}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: d6d9528366241804a8ff982d3cfffa3a, type: 3}
+      insertIndex: -1
       addedObject: {fileID: 580450331}
   m_SourcePrefab: {fileID: 100100000, guid: d6d9528366241804a8ff982d3cfffa3a, type: 3}
 --- !u!1 &580450330 stripped
@@ -376,8 +379,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   terrain: {fileID: 1780936233}
+  currentIndex: 0
   flatSpeed: 5
   uphillSpeed: 5
+  canMove: 0
 --- !u!114 &580450335
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -395,6 +400,21 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: d6d9528366241804a8ff982d3cfffa3a, type: 3}
   m_PrefabInstance: {fileID: 129563926}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &580450339
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 580450330}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 31ae53627de890845b265118de4d8317, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  safeHeight: 7.5
+  checkInterval: 0.1
+  checkSafeInterval: 0.3
 --- !u!1 &1780936230
 GameObject:
   m_ObjectHideFlags: 0
@@ -427,7 +447,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8dbe659286ffb064cbdc76f9a2220ff5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetMarkerPrefab: {fileID: 1688431507817098, guid: 947be8148d471475fb9c3d5fb2ce36a4, type: 3}
   baseHeightMap: {fileID: 0}
   resolution: 55
   amplitude: 1
@@ -782,7 +801,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   minHeight: 0.5
   maxHeight: 7
-  speed: 0.5
 --- !u!64 &1962113981
 MeshCollider:
   m_ObjectHideFlags: 0

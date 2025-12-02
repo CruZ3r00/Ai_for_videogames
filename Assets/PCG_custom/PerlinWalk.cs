@@ -29,12 +29,14 @@ public class PerlinWalk : MonoBehaviour {
 
 	//componente terrain nella scena
 	private Terrain t;
+	private WaterSystem w;
 
 	//set del random con il time corrente, start della coroutine per generare la landscape
 	void Start () {
 		if (RandomSeed == 0) RandomSeed = (int) System.DateTime.Now.Ticks;
 
 		t = GetComponent<Terrain> ();
+		w = GetComponentInChildren<WaterSystem> ();
 
 		StartCoroutine(GenerateLandscape());
 	}
@@ -106,7 +108,7 @@ public class PerlinWalk : MonoBehaviour {
 
 		// creazione del grafo
 		Graph graph = new Graph(height, t);
-
+		w.SetGraph(graph);
 		// inizializzazione di agentmovement
 		AgentMovement movement = agentToAdjust.GetComponent<AgentMovement>();
 		movement.Initialize(graph, t);   // solo set dei riferimenti
@@ -134,9 +136,9 @@ public class PerlinWalk : MonoBehaviour {
 
 			ac.SetGoal(goal, t);
 		}
-
-		// ora che GoalNode è impostato, possiamo calcolare il path
-		movement.StartPathfinding();
+		
+		TidalWalkerFSM fsm = agentToAdjust.GetComponent<TidalWalkerFSM>();
+		fsm.Initialize();
 
 		yield break;
 

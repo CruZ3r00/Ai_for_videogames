@@ -18,51 +18,31 @@ public class SpawnerAStar
 
     public static GraphNode FindSpawnPoint(Graph graph, GraphNode start, float minHeight)
     {
-        
-        List<GraphNode> open = new List<GraphNode>();
-        HashSet<GraphNode> closed = new HashSet<GraphNode>();
+         Queue<GraphNode> open = new Queue<GraphNode>();
+        HashSet<GraphNode> visited = new HashSet<GraphNode>();
 
-        start.gCost = 0;
-        open.Add(start);
+        open.Enqueue(start);
+        visited.Add(start);
 
         while (open.Count > 0)
         {
-            // trova nodo con fCost minore
-            GraphNode current = open[0];
-            for (int i = 1; i < open.Count; i++)
-            {
-                if (open[i].fCost < current.fCost)
-                    current = open[i];
-            }
+            GraphNode current = open.Dequeue();
 
-            open.Remove(current);
-            closed.Add(current);
-
-            // obiettivo: altezza
+            // obiettivo: primo nodo più vicino con altezza sufficiente
             if (current.height >= minHeight)
                 return current;
 
-            // esplora vicini
             foreach (GraphNode n in GetNeighbours(graph, current))
             {
-                if (!n.walkable || closed.Contains(n))
+                if (!n.walkable || visited.Contains(n))
                     continue;
 
-                float tentativeG = current.gCost + 1f;
-
-                if (tentativeG < n.gCost)
-                {
-                    n.gCost = tentativeG;
-                    n.hCost = Heuristic(start, n);
-                    n.parent = current;
-
-                    if (!open.Contains(n))
-                        open.Add(n);
-                }
+                visited.Add(n);
+                open.Enqueue(n);
             }
         }
 
-        return null; // nessun punto alto trovato
+        return null;
     }
     
     private static IEnumerable<GraphNode> GetNeighbours(Graph graph, GraphNode node)

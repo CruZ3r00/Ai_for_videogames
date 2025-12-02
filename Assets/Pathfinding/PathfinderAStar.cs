@@ -106,7 +106,7 @@ public class PathfinderAStar
     }
 
     //restituisce tutti i vicini del nodo in input
-    private static IEnumerable<GraphNode> GetNeighbours(Graph graph, GraphNode node)
+    public static IEnumerable<GraphNode> GetNeighbours(Graph graph, GraphNode node)
     {
         for (int i = 0; i < dirs.GetLength(0); i++)
         {

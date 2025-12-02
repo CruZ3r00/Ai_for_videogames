@@ -13,11 +13,13 @@ public class AgentMovement : MonoBehaviour
     public Graph graph;
 
     private AgentController controller;
-    private List<GraphNode> path;
-    private int currentIndex = 0;
+    public List<GraphNode> path;
+    public int currentIndex = 0;   
 
     public float flatSpeed = 1f;
     public float uphillSpeed = 0.5f;
+
+    public bool canMove = false;
 
     public void Initialize(Graph g, Terrain t)
     {
@@ -41,7 +43,7 @@ public class AgentMovement : MonoBehaviour
 
         if (path == null || path.Count == 0)
         {
-            Debug.LogError("[AgentMovement] PATH NON TROVATO!");
+            Debug.LogWarning("[AgentMovement] PATH NON TROVATO!");
             return;
         }
 
@@ -61,6 +63,8 @@ public class AgentMovement : MonoBehaviour
 
     void Update()
     {
+        if(!canMove)
+            return;
         if (path == null || currentIndex >= path.Count)
             return;
 
@@ -110,6 +114,27 @@ public class AgentMovement : MonoBehaviour
             return;
         }
     }
+    public float EstimateTimeToReach(int nodeIndex)
+    {
+        float time = 0f;
+
+        for (int i = currentIndex; i < nodeIndex; i++)
+        {
+            Vector3 a = NodeToWorld(path[i]);
+            Vector3 b = NodeToWorld(path[i + 1]);
+
+            float distance = Vector3.Distance(
+                new Vector3(a.x, 0, a.z),
+                new Vector3(b.x, 0, b.z)
+            );
+
+            float speed = GetSpeedBetween(path[i], path[i + 1]);
+
+            time += distance / speed;
+        }
+
+        return time;
+    }
     private void OnReachedGoal()
     {
         Debug.Log("Goal raggiunto! Ricalcolo nuovo goal...");
@@ -135,9 +160,6 @@ public class AgentMovement : MonoBehaviour
 
         controller.SetGoal(newGoal, terrain);
 
-        // Ricrea il path
-        StartPathfinding();
-
         // Riparti dal nodo 0
         currentIndex = 0;
     }
@@ -148,7 +170,7 @@ public class AgentMovement : MonoBehaviour
     }
 
     // ---- Conversioni ----
-    GraphNode WorldToNode(Vector3 pos)
+    public GraphNode WorldToNode(Vector3 pos)
     {
         int res = terrain.terrainData.heightmapResolution;
         float tx = pos.x / terrain.terrainData.size.x;
