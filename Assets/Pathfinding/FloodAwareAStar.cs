@@ -68,7 +68,7 @@ public class FloodAwareAStar
             foreach (GraphNode n in GetNeighbours(graph, current))
             {   
                 //se non camminabili o contenuti in close skippo
-                if (!n.walkable || closed.Contains(n))
+                if ( closed.Contains(n))
                     continue;
 
                 //costo ipotetico per arrivare al prossimo nodo (n)

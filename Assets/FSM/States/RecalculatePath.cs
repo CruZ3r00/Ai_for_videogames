@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using Unity.VisualScripting.FullSerializer;
+using System.Collections.Generic;
 
 
 
@@ -26,5 +27,30 @@ public class RecalculatePath
     {
         Debug.Log("sono in recalculate path");
         movement.StartPathfinding();
+        
+        if (movement.path == null || movement.path.Count <= 0)
+        {
+            movement.path.Add(movement.WorldToNode(transform.position));
+            GraphNode best = null;
+            List<GraphNode> neighbors = (List<GraphNode>)FloodAwareAStar.GetNeighbours(graph, movement.WorldToNode(transform.position));
+            float bestDist = float.MaxValue;
+            foreach (var n in neighbors)
+            {
+                if (!n.walkable) continue; // evita acqua o ostacoli
+
+                // distanza euclidea verso goal
+                float d = Mathf.Sqrt(
+                    (n.x - controller.GoalNode.x) * (n.x - controller.GoalNode.x) +
+                    (n.z - controller.GoalNode.z) * (n.z - controller.GoalNode.z)
+                );
+
+                if (d < bestDist)
+                {
+                    bestDist = d;
+                    best = n;
+                }
+            }
+            movement.path.Add(best);
+        }
     }
 }
